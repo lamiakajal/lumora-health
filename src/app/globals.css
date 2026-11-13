@@ -19,6 +19,7 @@
   --warm: #fbbf24;
   --ring: #14b8a6;
   --shadow-color: 11 37 48;
+  color-scheme: light;
 }
 
 .dark {
@@ -37,6 +38,7 @@
   --warm: #fcd34d;
   --ring: #2dd4bf;
   --shadow-color: 0 0 0;
+  color-scheme: dark;
 }
 
 @theme inline {
@@ -65,33 +67,36 @@
   --animate-float: float 6s ease-in-out infinite;
   --animate-marquee: marquee 40s linear infinite;
   --animate-pulse-ring: pulse-ring 2.4s cubic-bezier(0.2, 0.6, 0.2, 1) infinite;
+}
 
-  @keyframes float {
-    0%,
-    100% {
-      transform: translateY(0);
-    }
-    50% {
-      transform: translateY(-10px);
-    }
+/* Keyframes live outside @theme so they are always emitted as plain CSS. */
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
   }
-  @keyframes marquee {
-    from {
-      transform: translateX(0);
-    }
-    to {
-      transform: translateX(-50%);
-    }
+  50% {
+    transform: translateY(-10px);
   }
-  @keyframes pulse-ring {
-    0% {
-      transform: scale(0.9);
-      opacity: 0.7;
-    }
-    100% {
-      transform: scale(1.6);
-      opacity: 0;
-    }
+}
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
   }
 }
 
