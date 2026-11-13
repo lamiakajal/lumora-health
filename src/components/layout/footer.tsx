@@ -34,13 +34,13 @@ function LinkColumn({
 }) {
   return (
     <div>
-      <h3 className="font-display text-base font-semibold text-white">{title}</h3>
+      <h3 className="font-display text-base font-semibold text-foreground">{title}</h3>
       <ul className="mt-5 space-y-3">
         {links.map((link) => (
           <li key={link.href}>
             <Link
               href={link.href}
-              className="text-[15px] text-white/65 transition-colors hover:text-primary"
+              className="text-[15px] text-muted-foreground transition-colors hover:text-primary"
             >
               {link.label}
             </Link>
@@ -58,12 +58,12 @@ export function Footer() {
     <footer className="mt-24">
       <MarqueeStrip />
 
-      <div className="bg-[#082029] text-white/70">
+      <div className="border-t bg-soft text-muted-foreground">
         <div className="mx-auto max-w-7xl px-5 pb-8 pt-16">
           <div className="grid gap-12 lg:grid-cols-12">
             <div className="lg:col-span-4">
               <Link href="/" aria-label={`${siteConfig.name} home`}>
-                <Logo className="text-white" />
+                <Logo />
               </Link>
               <p className="mt-5 max-w-sm text-[15px] leading-relaxed">
                 {siteConfig.description}
@@ -76,7 +76,7 @@ export function Footer() {
                       target="_blank"
                       rel="noopener noreferrer"
                       aria-label={label}
-                      className="grid size-10 place-items-center rounded-full border border-white/15 text-white/80 transition hover:-translate-y-0.5 hover:border-primary hover:bg-primary hover:text-primary-foreground"
+                      className="grid size-10 place-items-center rounded-full border bg-card text-foreground/80 transition hover:-translate-y-0.5 hover:border-primary hover:bg-primary hover:text-primary-foreground"
                     >
                       <Icon className="size-[18px]" />
                     </a>
@@ -92,7 +92,7 @@ export function Footer() {
             </div>
           </div>
 
-          <div className="mt-14 grid gap-8 rounded-card border border-white/10 bg-white/[0.03] p-6 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-14 grid gap-8 rounded-card border bg-card p-6 sm:grid-cols-2 lg:grid-cols-4">
             <div className="flex gap-3">
               <MapPinIcon className="mt-0.5 size-5 shrink-0 text-primary" />
               <address className="text-sm not-italic leading-relaxed">
@@ -108,7 +108,7 @@ export function Footer() {
                   {contact.phone}
                 </a>
                 <br />
-                <span className="text-white/50">Nurse line: </span>
+                <span className="text-muted-foreground/80">Nurse line: </span>
                 <a href={toTelHref(contact.emergencyPhone)} className="hover:text-primary">
                   {contact.emergencyPhone}
                 </a>
@@ -125,20 +125,20 @@ export function Footer() {
               <ul className="space-y-1 text-sm">
                 {hours.map((item) => (
                   <li key={item.days}>
-                    <span className="text-white">{item.days}:</span> {item.time}
+                    <span className="font-semibold text-foreground">{item.days}:</span> {item.time}
                   </li>
                 ))}
               </ul>
             </div>
           </div>
 
-          <p className="mt-8 rounded-xl bg-white/[0.04] px-4 py-3 text-[13px] leading-relaxed text-white/60">
-            If you are experiencing a medical emergency, call <strong className="text-white">911</strong>{" "}
+          <p className="mt-8 rounded-xl border bg-card px-4 py-3 text-[13px] leading-relaxed text-muted-foreground">
+            If you are experiencing a medical emergency, call <strong className="text-foreground">911</strong>{" "}
             right away. Information on this website is for general purposes and is not a
             substitute for professional medical advice.
           </p>
 
-          <div className="mt-8 flex flex-col items-start justify-between gap-4 border-t border-white/10 pt-6 text-[13px] md:flex-row md:items-center">
+          <div className="mt-8 flex flex-col items-start justify-between gap-4 border-t pt-6 text-[13px] md:flex-row md:items-center">
             <p>
               &copy; {COPYRIGHT_YEAR} {siteConfig.name}. All rights reserved.
             </p>
@@ -157,7 +157,7 @@ export function Footer() {
                 href={siteConfig.developer.url}
                 target="_blank"
                 rel="author noopener"
-                className="font-semibold text-white hover:text-primary"
+                className="font-semibold text-foreground hover:text-primary"
               >
                 {siteConfig.developer.name}
               </a>
