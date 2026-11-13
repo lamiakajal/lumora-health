@@ -89,7 +89,7 @@ export function PageLoader() {
           <div className="flex w-[min(80vw,22rem)] flex-col items-center gap-6">
             <div className="relative grid place-items-center">
               <span className="absolute size-20 animate-pulse-ring rounded-full bg-primary/30" />
-              <LogoMark className="relative size-20 animate-float drop-shadow-lg" />
+              <LogoMark loop className="relative size-20 animate-float drop-shadow-lg" />
             </div>
 
             <p className="font-display text-2xl font-bold tracking-tight">
