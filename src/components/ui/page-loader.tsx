@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { LogoMark } from "@/components/brand/logo";
+import { SITE_READY_EVENT } from "@/hooks/use-site-ready";
 import { easedPercent } from "@/lib/progress";
 import { siteConfig } from "../../../site.config";
 
@@ -11,6 +12,7 @@ const SESSION_KEY = "lumora:loader-seen";
 /**
  * Full-screen loader with the logo and a live percentage.
  * Shown once per browser session so returning navigations stay instant.
+ * When it finishes it announces `lumora:ready` so page animations can start.
  */
 export function PageLoader() {
   const reduceMotion = useReducedMotion();
@@ -42,6 +44,8 @@ export function PageLoader() {
         /* storage can be unavailable (private mode) */
       }
       document.body.style.overflow = "";
+      document.documentElement.dataset.ready = "true";
+      window.dispatchEvent(new Event(SITE_READY_EVENT));
       setVisible(false);
     };
 
