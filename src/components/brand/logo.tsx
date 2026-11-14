@@ -104,7 +104,7 @@ export function LogoMark({ className, loop = false }: LogoMarkProps) {
   );
 }
 
-/** Mark plus wordmark. Hovering anywhere on it plays the heartbeat animation. */
+/** Mark plus wordmark. The heartbeat loops forever; hovering adds a small tilt. */
 export function Logo({ className }: { className?: string }) {
   const second = siteConfig.name.replace(siteConfig.shortName, "").trim();
 
@@ -115,7 +115,7 @@ export function Logo({ className }: { className?: string }) {
       whileHover="hover"
       className={cn("inline-flex items-center gap-3", className)}
     >
-      <LogoMark />
+      <LogoMark loop />
       <span className="flex flex-col leading-none">
         <span className="font-display text-[1.4rem] font-extrabold tracking-tight">
           {siteConfig.shortName}
