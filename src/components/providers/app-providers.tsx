@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { MotionConfig } from "motion/react";
 import { ThemeProvider } from "next-themes";
 import { Toaster } from "@/components/ui/toaster";
 
@@ -17,8 +18,11 @@ export function AppProviders({ children }: { children: ReactNode }) {
       storageKey="lumora-theme"
       disableTransitionOnChange
     >
-      {children}
-      <Toaster />
+      {/* Visitors who ask their device for reduced motion get gentler animations. */}
+      <MotionConfig reducedMotion="user">
+        {children}
+        <Toaster />
+      </MotionConfig>
     </ThemeProvider>
   );
 }
