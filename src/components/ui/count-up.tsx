@@ -23,7 +23,7 @@ function formatValue(
   return `${prefix}${number}${suffix}`;
 }
 
-/** Counts up to a number the first time it scrolls into view. */
+/** Counts up from 0 every time it scrolls into view (scroll away and back to replay). */
 export function CountUp({
   to,
   prefix = "",
@@ -33,16 +33,22 @@ export function CountUp({
   className,
 }: CountUpProps) {
   const ref = useRef<HTMLSpanElement>(null);
-  const inView = useInView(ref, { once: true, margin: "-40px" });
+  const inView = useInView(ref, { margin: "-40px" });
   const reduceMotion = useReducedMotion();
 
   useEffect(() => {
     const node = ref.current;
-    if (!node || !inView) return;
+    if (!node) return;
     const options = { prefix, suffix, decimals };
 
     if (reduceMotion) {
       node.textContent = formatValue(to, options);
+      return;
+    }
+
+    // Out of view: reset to 0 so the count starts fresh when it returns.
+    if (!inView) {
+      node.textContent = formatValue(0, options);
       return;
     }
 
