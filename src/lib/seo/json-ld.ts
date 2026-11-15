@@ -1,4 +1,6 @@
+import type { Doctor } from "@/data/doctors";
 import type { Faq } from "@/data/faqs";
+import type { Service } from "@/data/services";
 import { siteConfig } from "../../../site.config";
 
 type JsonLdNode = Record<string, unknown>;
@@ -93,5 +95,48 @@ export function homeJsonLd(items: readonly Faq[]): JsonLdNode {
   return {
     "@context": "https://schema.org",
     "@graph": [hospitalJsonLd(), websiteJsonLd(), developerJsonLd(), faqJsonLd(items)],
+  };
+}
+
+/** Wraps nodes in one @graph so pages can declare several things at once. */
+export function graphJsonLd(nodes: JsonLdNode[]): JsonLdNode {
+  return { "@context": "https://schema.org", "@graph": nodes };
+}
+
+export function breadcrumbJsonLd(items: { name: string; path: string }[]): JsonLdNode {
+  return {
+    "@type": "BreadcrumbList",
+    itemListElement: items.map((item, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: item.name,
+      item: `${base()}${item.path === "/" ? "" : item.path}`,
+    })),
+  };
+}
+
+export function serviceJsonLd(service: Service): JsonLdNode {
+  return {
+    "@type": "Service",
+    "@id": `${base()}/services/${service.slug}#service`,
+    name: service.title,
+    description: service.description,
+    url: `${base()}/services/${service.slug}`,
+    serviceType: service.title,
+    provider: { "@id": `${base()}/#hospital` },
+    areaServed: ["United States", "Canada"],
+  };
+}
+
+export function physicianJsonLd(doctor: Doctor, photoPath?: string | null): JsonLdNode {
+  return {
+    "@type": "Physician",
+    "@id": `${base()}/doctors/${doctor.slug}#physician`,
+    name: doctor.name,
+    url: `${base()}/doctors/${doctor.slug}`,
+    description: `${doctor.name} is a ${doctor.specialty} specialist at ${siteConfig.name}.`,
+    knowsLanguage: doctor.languages,
+    worksFor: { "@id": `${base()}/#hospital` },
+    ...(photoPath ? { image: `${base()}${photoPath}` } : {}),
   };
 }
