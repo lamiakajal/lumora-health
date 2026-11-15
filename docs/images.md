@@ -91,7 +91,7 @@ or scrubs, plain light background, friendly look. Search terms: `doctor portrait
 | `james-oduya` | Dr. James Oduya | Nephrology | Black man, 40s |
 | `linda-park` | Dr. Linda Park | Dentistry | woman, 40s |
 | `mark-thompson` | Dr. Mark Thompson | Anesthesiology | man, 50s |
-| `sarah-whitfield` | Dr. Sarah Whitfield | Nutrition and Dietetics | woman, 40s |
+| `sarah-whitfield` | Sarah Whitfield | Nutrition and Dietetics | woman, 40s |
 
 Start with the first 12 for launch; the rest show initials until a photo is added.
 These names are fictional placeholders. Replace them with the client's real team.
