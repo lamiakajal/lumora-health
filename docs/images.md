@@ -19,14 +19,13 @@ the site never shows a broken image.
 | File name | What to search | Notes |
 | --- | --- | --- |
 | `hero.webp` | `doctors team hospital corridor` | Done. Portrait crop, faces in the middle |
-| `team-smiling.webp` | `smiling medical team` | Done. About section and CTA banner |
+| `team-smiling.webp` | `smiling medical team` | Done. Used in the About section |
 | `team-corridor.webp` | `doctors walking hospital hallway` | Done. Careers banner |
 | `cta-welcome.webp` | `friendly doctor welcoming patient` | Final call-to-action banner, space on one side for text |
 | `telehealth.webp` | `video call doctor laptop patient` | Telehealth section |
 | `insurance.webp` | `health insurance card documents` | Insurance page |
 | `contact.webp` | `hospital reception friendly` | Contact page |
 | `careers.webp` | `nurses team hospital` | Careers page |
-| `about-1.webp`, `about-2.webp`, `about-3.webp` | `nurse patient care`, `doctor consultation`, `modern hospital interior` | About tiles |
 
 ## Facilities slider (8 photos, landscape)
 
