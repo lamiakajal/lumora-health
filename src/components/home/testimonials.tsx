@@ -1,53 +1,18 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
-import { useReducedMotion } from "motion/react";
 import { Reveal } from "@/components/ui/reveal";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { ChevronLeftIcon, ChevronRightIcon, QuoteIcon, StarIcon } from "@/components/ui/icons-services";
 import { testimonials } from "@/data/testimonials";
 import { testimonialsCopy } from "@/data/home-copy";
+import { useCarousel } from "@/hooks/use-carousel";
 import { cn } from "@/lib/cn";
 import { getInitials } from "@/lib/text";
 
-const GAP = 24;
-
 export function Testimonials() {
-  const trackRef = useRef<HTMLUListElement>(null);
-  const pausedRef = useRef(false);
-  const reduceMotion = useReducedMotion();
-
-  const scrollByCard = useCallback((direction: 1 | -1) => {
-    const track = trackRef.current;
-    if (!track) return;
-    const card = track.firstElementChild as HTMLElement | null;
-    const step = card ? card.offsetWidth + GAP : track.clientWidth;
-    const atEnd = track.scrollLeft + track.clientWidth >= track.scrollWidth - 8;
-    const atStart = track.scrollLeft <= 8;
-
-    if (direction === 1 && atEnd) {
-      track.scrollTo({ left: 0, behavior: "smooth" });
-    } else if (direction === -1 && atStart) {
-      track.scrollTo({ left: track.scrollWidth, behavior: "smooth" });
-    } else {
-      track.scrollBy({ left: direction * step, behavior: "smooth" });
-    }
-  }, []);
-
-  useEffect(() => {
-    if (reduceMotion) return;
-    const id = setInterval(() => {
-      if (!pausedRef.current) scrollByCard(1);
-    }, 6000);
-    return () => clearInterval(id);
-  }, [reduceMotion, scrollByCard]);
-
-  const pause = () => {
-    pausedRef.current = true;
-  };
-  const resume = () => {
-    pausedRef.current = false;
-  };
+  const { trackRef, scrollByCard, pause, resume } = useCarousel<HTMLUListElement>({
+    autoplayMs: 6000,
+  });
 
   const arrow =
     "grid size-12 place-items-center rounded-full border bg-card transition hover:border-primary hover:bg-primary hover:text-primary-foreground active:scale-95";
