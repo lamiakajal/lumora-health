@@ -9,6 +9,12 @@ describe("sitemap", () => {
     expect(entries[0].url).toMatch(/^https?:\/\//);
   });
 
+  it("includes every specialty and doctor page", () => {
+    const urls = sitemap().map((entry) => entry.url);
+    expect(urls.some((url) => url.endsWith("/services/cardiology"))).toBe(true);
+    expect(urls.some((url) => url.endsWith("/doctors/amelia-hart"))).toBe(true);
+  });
+
   it("has no duplicate URLs", () => {
     const urls = sitemap().map((entry) => entry.url);
     expect(new Set(urls).size).toBe(urls.length);
