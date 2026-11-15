@@ -1,6 +1,16 @@
 import { describe, expect, it } from "vitest";
 import { featuredFaqs } from "@/data/faqs";
-import { developerJsonLd, faqJsonLd, homeJsonLd, serializeJsonLd } from "./json-ld";
+import { doctors } from "@/data/doctors";
+import { services } from "@/data/services";
+import {
+  breadcrumbJsonLd,
+  developerJsonLd,
+  faqJsonLd,
+  homeJsonLd,
+  physicianJsonLd,
+  serializeJsonLd,
+  serviceJsonLd,
+} from "./json-ld";
 
 describe("serializeJsonLd", () => {
   it("escapes angle brackets so data cannot close the script tag", () => {
@@ -36,5 +46,32 @@ describe("homeJsonLd", () => {
     const graph = (homeJsonLd(featuredFaqs) as { "@graph": { "@type": string }[] })["@graph"];
     const types = graph.map((node) => node["@type"]);
     expect(types).toEqual(["Hospital", "WebSite", "Person", "FAQPage"]);
+  });
+});
+
+describe("breadcrumbJsonLd", () => {
+  it("numbers the items from 1 with absolute URLs", () => {
+    const node = breadcrumbJsonLd([
+      { name: "Home", path: "/" },
+      { name: "Doctors", path: "/doctors" },
+    ]) as { itemListElement: { position: number; item: string }[] };
+    expect(node.itemListElement.map((entry) => entry.position)).toEqual([1, 2]);
+    expect(node.itemListElement[1].item).toMatch(/^https?:\/\/.+\/doctors$/);
+  });
+});
+
+describe("serviceJsonLd and physicianJsonLd", () => {
+  it("describe a specialty and a doctor", () => {
+    expect((serviceJsonLd(services[0]) as { "@type": string })["@type"]).toBe("Service");
+    const physician = physicianJsonLd(doctors[0], "/images/doctors/amelia-hart.webp") as {
+      "@type": string;
+      image?: string;
+    };
+    expect(physician["@type"]).toBe("Physician");
+    expect(physician.image).toMatch(/amelia-hart\.webp$/);
+  });
+
+  it("leaves out the image when there is no photo", () => {
+    expect("image" in physicianJsonLd(doctors[0], null)).toBe(false);
   });
 });
