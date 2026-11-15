@@ -20,7 +20,7 @@ the site never shows a broken image.
 | --- | --- | --- |
 | `hero.webp` | `doctors team hospital corridor` | Done. Portrait crop, faces in the middle |
 | `team-smiling.webp` | `smiling medical team` | Done. Used in the About section |
-| `team-corridor.webp` | `doctors walking hospital hallway` | Done. Careers banner |
+| `team-corridor.webp` | `doctors walking hospital hallway` | Done. Careers banner, and the final call-to-action banner until `cta-welcome` is added |
 | `cta-welcome.webp` | `friendly doctor welcoming patient` | Final call-to-action banner, space on one side for text |
 | `telehealth.webp` | `video call doctor laptop patient` | Telehealth section |
 | `insurance.webp` | `health insurance card documents` | Insurance page |
