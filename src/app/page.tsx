@@ -1,4 +1,7 @@
+import { AboutSection } from "@/components/home/about-section";
 import { Hero } from "@/components/home/hero";
+import { HowItWorks } from "@/components/home/how-it-works";
+import { QuickActions } from "@/components/home/quick-actions";
 import { StatsBand } from "@/components/home/stats-band";
 import { findPublicImage } from "@/lib/public-images";
 
@@ -9,6 +12,9 @@ export default function Home() {
   return (
     <main id="main">
       <Hero photo={heroPhoto} />
+      <QuickActions />
+      <HowItWorks />
+      <AboutSection />
       <StatsBand />
     </main>
   );
