@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useCallback, useState } from "react";
 import { motion, useMotionValueEvent, useScroll } from "motion/react";
 import { Logo } from "@/components/brand/logo";
+import { AuthButton } from "@/components/auth/auth-button";
 import { MobileMenu } from "@/components/layout/mobile-menu";
 import { NavDropdown } from "@/components/layout/nav-dropdown";
 import { ButtonLink } from "@/components/ui/button";
@@ -68,9 +69,7 @@ export function Navbar() {
 
           <div className="flex items-center gap-2.5">
             <ThemeToggle />
-            <ButtonLink href="/login" variant="ghost" className="hidden xl:inline-flex">
-              Sign in
-            </ButtonLink>
+            <AuthButton className="hidden xl:inline-flex" />
             <ButtonLink href="/book" arrow className="hidden sm:inline-flex">
               Book appointment
             </ButtonLink>
