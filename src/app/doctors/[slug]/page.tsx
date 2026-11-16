@@ -2,9 +2,11 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import { CtaBanner } from "@/components/home/cta-banner";
 import { DoctorCard } from "@/components/home/doctor-card";
 import { PageHero } from "@/components/layout/page-hero";
+import { PageSkeleton } from "@/components/layout/page-skeleton";
 import { JsonLd } from "@/components/seo/json-ld";
 import { ButtonLink } from "@/components/ui/button";
 import { VideoIcon } from "@/components/ui/icons-medical";
@@ -40,7 +42,7 @@ function joinList(items: string[]): string {
   return `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`;
 }
 
-export default async function DoctorPage({ params }: Props) {
+async function DoctorContent({ params }: Props) {
   const { slug } = await params;
   const doctor = getDoctorBySlug(slug);
   if (!doctor) notFound();
@@ -203,5 +205,17 @@ export default async function DoctorPage({ params }: Props) {
 
       <CtaBanner />
     </main>
+  );
+}
+
+/**
+ * Reading the URL (params) happens behind Suspense so Next.js can show the page shell
+ * instantly. Every known slug is still fully prerendered by generateStaticParams.
+ */
+export default function DoctorPage({ params }: Props) {
+  return (
+    <Suspense fallback={<PageSkeleton />}>
+      <DoctorContent params={params} />
+    </Suspense>
   );
 }
