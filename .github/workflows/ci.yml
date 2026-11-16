@@ -45,3 +45,7 @@ jobs:
         run: npm run build
         env:
           NEXT_PUBLIC_SITE_URL: https://example.com
+          # Placeholder values so the build can start. They are not real secrets.
+          MONGODB_URI: mongodb://localhost:27017/lumora-ci
+          BETTER_AUTH_SECRET: ci-placeholder-secret-not-for-real-use-0000
+          BETTER_AUTH_URL: https://example.com
