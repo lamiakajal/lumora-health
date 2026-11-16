@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
+import { useAccountLink } from "@/components/auth/auth-button";
 import { Logo } from "@/components/brand/logo";
 import { ButtonLink } from "@/components/ui/button";
 import { ChevronDownIcon, CloseIcon, PhoneIcon } from "@/components/ui/icons";
@@ -19,6 +20,7 @@ type MobileMenuProps = {
 
 export function MobileMenu({ open, onClose, pathname }: MobileMenuProps) {
   const [expanded, setExpanded] = useState<string | null>(null);
+  const account = useAccountLink();
 
   useEffect(() => {
     if (!open) return;
@@ -148,8 +150,8 @@ export function MobileMenu({ open, onClose, pathname }: MobileMenuProps) {
                 Book appointment
               </ButtonLink>
               <div className="grid grid-cols-2 gap-3">
-                <ButtonLink href="/login" variant="outline" onClick={onClose}>
-                  Sign in
+                <ButtonLink href={account.href} variant="outline" onClick={onClose}>
+                  {account.label}
                 </ButtonLink>
                 <a
                   href={toTelHref(siteConfig.contact.phone)}
