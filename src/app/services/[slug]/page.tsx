@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import { CtaBanner } from "@/components/home/cta-banner";
 import { DoctorCard } from "@/components/home/doctor-card";
 import { PageHero } from "@/components/layout/page-hero";
+import { PageSkeleton } from "@/components/layout/page-skeleton";
 import { JsonLd } from "@/components/seo/json-ld";
 import { ButtonLink } from "@/components/ui/button";
 import { ArrowRightIcon } from "@/components/ui/icons";
@@ -56,7 +58,7 @@ const steps = [
   },
 ] as const;
 
-export default async function ServicePage({ params }: Props) {
+async function ServiceContent({ params }: Props) {
   const { slug } = await params;
   const service = getServiceBySlug(slug);
   if (!service) notFound();
@@ -185,5 +187,17 @@ export default async function ServicePage({ params }: Props) {
 
       <CtaBanner />
     </main>
+  );
+}
+
+/**
+ * Reading the URL (params) happens behind Suspense so Next.js can show the page shell
+ * instantly. Every known slug is still fully prerendered by generateStaticParams.
+ */
+export default function ServicePage({ params }: Props) {
+  return (
+    <Suspense fallback={<PageSkeleton />}>
+      <ServiceContent params={params} />
+    </Suspense>
   );
 }
