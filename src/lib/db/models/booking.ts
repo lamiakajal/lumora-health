@@ -6,7 +6,11 @@ const bookingSchema = new Schema(
     /** The Better Auth user id of the patient. */
     patientId: { type: String, required: true, index: true },
     providerId: { type: Schema.Types.ObjectId, ref: "Provider", required: true },
+    /** Copied from the provider so lists can show the doctor without another lookup. */
+    providerSlug: { type: String, required: true, index: true },
     serviceSlug: { type: String, required: true },
+    /** IANA time zone the visit time should be shown in (the doctor's). */
+    timezone: { type: String, required: true },
     start: { type: Date, required: true },
     end: { type: Date, required: true },
     status: { type: String, enum: bookingStatuses, required: true, default: "pending" },
