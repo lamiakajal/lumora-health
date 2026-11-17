@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { PageHero } from "@/components/layout/page-hero";
 import { PageSkeleton } from "@/components/layout/page-skeleton";
+import { Appointments } from "@/components/portal/appointments";
 import { ButtonLink } from "@/components/ui/button";
 import { roleLabels } from "@/lib/auth/roles";
 import { requireUser } from "@/lib/auth/session";
@@ -24,18 +25,20 @@ async function PortalContent() {
         description="Your appointments, results and account in one place."
         crumbs={[{ label: "Home", href: "/" }, { label: "Patient portal" }]}
       >
-        <ButtonLink href="/doctors" size="lg" arrow>
-          Find a doctor
+        <ButtonLink href="/book" size="lg" arrow>
+          Book a visit
         </ButtonLink>
         <SignOutButton />
       </PageHero>
 
       <section className="mx-auto grid max-w-7xl gap-6 px-5 py-14 md:grid-cols-2">
         <div className="rounded-card border bg-card p-7 shadow-soft">
-          <h2 className="font-display text-xl font-bold">Upcoming appointments</h2>
-          <p className="mt-2 text-muted-foreground">
-            You have no appointments yet. Online booking opens in the next update.
-          </p>
+          <h2 className="font-display text-xl font-bold">Your appointments</h2>
+          <div className="mt-4">
+            <Suspense fallback={<div className="h-24 animate-pulse rounded-xl bg-muted" aria-busy="true" />}>
+              <Appointments patientId={user.id} />
+            </Suspense>
+          </div>
         </div>
 
         <div className="rounded-card border bg-card p-7 shadow-soft">
