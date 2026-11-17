@@ -11,6 +11,7 @@ const staticRoutes: Route[] = [
   { path: "/", priority: 1, changeFrequency: "weekly" },
   { path: "/services", priority: 0.9, changeFrequency: "weekly" },
   { path: "/doctors", priority: 0.9, changeFrequency: "weekly" },
+  { path: "/book", priority: 0.8, changeFrequency: "monthly" },
 ];
 
 export const publicRoutes: Route[] = [
