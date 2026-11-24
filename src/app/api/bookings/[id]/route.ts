@@ -1,6 +1,8 @@
+import { after } from "next/server";
 import { auth } from "@/lib/auth/server";
 import { normalizeRole } from "@/lib/auth/roles";
 import { cancelBooking } from "@/lib/booking/service";
+import { notifyBookingCancelled } from "@/lib/email/notify";
 import { cancelRequestSchema } from "@/lib/validation/booking";
 
 type Context = { params: Promise<{ id: string }> };
@@ -26,5 +28,10 @@ export async function PATCH(request: Request, { params }: Context) {
   if (!cancelled) {
     return Response.json({ error: "We could not cancel that appointment." }, { status: 404 });
   }
+
+  // An admin cancelling someone else's visit counts as the clinic cancelling.
+  const byClinic = role === "admin" && cancelled.patientEmail !== session.user.email;
+  after(() => notifyBookingCancelled(cancelled, byClinic ? "clinic" : "patient"));
+
   return Response.json({ ok: true });
 }
