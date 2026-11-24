@@ -42,6 +42,8 @@ function fakeRepo(initial: Interval[] = []): BookingRepo & { saved: NewBooking[]
 
 const request = {
   patientId: "patient-1",
+  patientName: "Test Patient",
+  patientEmail: "patient@example.com",
   providerSlug: "amelia-hart",
   serviceSlug: "primary-care",
   start: SLOT_START,
