@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bookingRequestSchema, cancelRequestSchema } from "./booking";
+import { bookingRequestSchema, cancelRequestSchema, rescheduleRequestSchema } from "./booking";
 
 const valid = {
   doctorSlug: "amelia-hart",
@@ -36,5 +36,14 @@ describe("cancelRequestSchema", () => {
   it("only accepts the cancel action", () => {
     expect(cancelRequestSchema.safeParse({ action: "cancel" }).success).toBe(true);
     expect(cancelRequestSchema.safeParse({ action: "delete" }).success).toBe(false);
+  });
+});
+
+
+describe("rescheduleRequestSchema", () => {
+  it("needs a valid new time", () => {
+    expect(rescheduleRequestSchema.safeParse({ start: "2026-11-24T17:00:00.000Z" }).success).toBe(true);
+    expect(rescheduleRequestSchema.safeParse({ start: "soon" }).success).toBe(false);
+    expect(rescheduleRequestSchema.safeParse({}).success).toBe(false);
   });
 });
