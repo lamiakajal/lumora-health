@@ -13,7 +13,8 @@ import {
 } from "./defaults";
 import { generateSlots, type AvailabilityConfig, type DaySlots, type Interval } from "./slots";
 import { activeStatuses, type BookingStatus } from "./status";
-import type { BookingSummary } from "./types";
+import type { BookingEmailData } from "@/lib/email/templates";
+import type { BookingSummary, ProviderBooking } from "./types";
 import { addDays, localDateOf, zonedTimeToUtc } from "./time";
 
 const DAY_MS = 24 * 60 * 60_000;
@@ -96,13 +97,23 @@ async function ensureProvider(doctor: Doctor, timezone: string) {
 
 type CreateArgs = {
   patientId: string;
+  patientName: string;
+  patientEmail: string;
   doctor: Doctor;
   start: Date;
   visitType: VisitType;
   reason: string;
 };
 
-export async function createBookingForPatient({ patientId, doctor, start, visitType, reason }: CreateArgs) {
+export async function createBookingForPatient({
+  patientId,
+  patientName,
+  patientEmail,
+  doctor,
+  start,
+  visitType,
+  reason,
+}: CreateArgs) {
   const config = await loadAvailability(doctor);
   const provider = await ensureProvider(doctor, config.timezone);
 
@@ -123,6 +134,8 @@ export async function createBookingForPatient({ patientId, doctor, start, visitT
     config,
     booking: {
       patientId,
+      patientName,
+      patientEmail,
       providerSlug: doctor.slug,
       serviceSlug: doctor.serviceSlug,
       start,
@@ -138,8 +151,10 @@ export async function createBookingForPatient({ patientId, doctor, start, visitT
   return { ...result, timezone: config.timezone };
 }
 
-type BookingRow = {
+export type BookingRow = {
   _id: Types.ObjectId;
+  patientName?: string | null;
+  patientEmail?: string | null;
   providerSlug: string;
   start: Date;
   end: Date;
@@ -167,6 +182,30 @@ function toSummary(row: BookingRow): BookingSummary {
   };
 }
 
+export function toProviderBooking(row: BookingRow): ProviderBooking {
+  return {
+    ...toSummary(row),
+    patientName: row.patientName ?? "Patient",
+    patientEmail: row.patientEmail ?? "",
+  };
+}
+
+/** Everything an email about this booking needs. */
+export function toEmailData(row: BookingRow): BookingEmailData {
+  const summary = toSummary(row);
+  return {
+    bookingId: summary.id,
+    patientName: row.patientName ?? "there",
+    patientEmail: row.patientEmail ?? "",
+    doctorName: summary.doctorName,
+    specialty: summary.specialty,
+    start: summary.start,
+    timezone: summary.timezone,
+    visitType: summary.visitType,
+    reason: summary.reason,
+  };
+}
+
 /** A patient's appointments, soonest first. */
 export async function listBookings(patientId: string): Promise<BookingSummary[]> {
   await connectToDatabase();
@@ -176,9 +215,14 @@ export async function listBookings(patientId: string): Promise<BookingSummary[]>
 
 type CancelArgs = { bookingId: string; userId: string; isAdmin: boolean; reason: string };
 
-/** Cancels a pending or confirmed booking. Patients can only cancel their own. */
-export async function cancelBooking({ bookingId, userId, isAdmin, reason }: CancelArgs): Promise<boolean> {
-  if (!isValidObjectId(bookingId)) return false;
+/** Cancels a pending or confirmed booking and returns it (for the email). Patients can only cancel their own. */
+export async function cancelBooking({
+  bookingId,
+  userId,
+  isAdmin,
+  reason,
+}: CancelArgs): Promise<BookingEmailData | null> {
+  if (!isValidObjectId(bookingId)) return null;
   await connectToDatabase();
 
   const updated = await BookingModel.findOneAndUpdate(
@@ -189,6 +233,6 @@ export async function cancelBooking({ bookingId, userId, isAdmin, reason }: Canc
     },
     { $set: { status: "cancelled", cancelledAt: new Date(), cancelReason: reason } },
     { new: true },
-  );
-  return Boolean(updated);
+  ).lean();
+  return updated ? toEmailData(updated as unknown as BookingRow) : null;
 }
