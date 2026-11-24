@@ -23,3 +23,12 @@ export async function requireStaff(request: Request): Promise<StaffContext | Res
   const provider = role === "doctor" ? await getProviderForUser(session.user.id) : null;
   return { userId: session.user.id, role, provider };
 }
+
+/** For API routes only administrators may use. Returns the admin's id, or the error response to send. */
+export async function requireAdminApi(request: Request): Promise<{ userId: string } | Response> {
+  const session = await auth.api.getSession({ headers: request.headers });
+  if (!session) return Response.json({ error: "Please sign in." }, { status: 401 });
+  const role = normalizeRole((session.user as { role?: unknown }).role);
+  if (role !== "admin") return Response.json({ error: "Not found." }, { status: 404 });
+  return { userId: session.user.id };
+}
