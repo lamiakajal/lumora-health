@@ -19,7 +19,7 @@ const statusLabels: Record<BookingStatus, string> = {
   cancelled: "Cancelled",
 };
 
-function Row({ booking }: { booking: ProviderBooking }) {
+export function BookingRow({ booking, showDoctor = false }: { booking: ProviderBooking; showDoctor?: boolean }) {
   return (
     <li className="rounded-xl border bg-background p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -34,7 +34,8 @@ function Row({ booking }: { booking: ProviderBooking }) {
             <span className="font-semibold">{booking.patientName}</span>
             <span className="text-muted-foreground">
               {" "}
-              &middot; {booking.visitType === "video" ? "Video visit" : "In person"}
+              &middot; {showDoctor && <>{booking.doctorName} &middot; </>}
+              {booking.visitType === "video" ? "Video visit" : "In person"}
               {booking.patientEmail && (
                 <>
                   {" "}
@@ -70,7 +71,7 @@ function Group({ title, bookings, empty }: { title: string; bookings: ProviderBo
       ) : (
         <ul className="space-y-3">
           {bookings.map((booking) => (
-            <Row key={booking.id} booking={booking} />
+            <BookingRow key={booking.id} booking={booking} />
           ))}
         </ul>
       )}
