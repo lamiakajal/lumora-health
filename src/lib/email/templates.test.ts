@@ -3,6 +3,7 @@ import {
   bookingCancelledEmail,
   bookingConfirmedEmail,
   bookingReminderEmail,
+  bookingRescheduledEmail,
   bookingRequestedEmail,
   escapeHtml,
   whenText,
@@ -69,5 +70,17 @@ describe("booking emails", () => {
     expect(email.html).not.toContain("<b>Evil</b>");
     expect(email.html).not.toContain("<img src=x");
     expect(email.html).toContain("&lt;img");
+  });
+});
+
+describe("rescheduled email", () => {
+  it("shows both the old and the new time", () => {
+    const email = bookingRescheduledEmail(
+      { ...data, start: "2026-11-24T18:00:00.000Z" },
+      "2026-11-23T17:00:00.000Z",
+    );
+    expect(email.subject).toMatch(/^Rescheduled:/);
+    expect(email.text).toMatch(/Mon, Nov 23 at 9:00\sAM PST/);
+    expect(email.text).toMatch(/Tue, Nov 24 at 10:00\sAM PST/);
   });
 });
