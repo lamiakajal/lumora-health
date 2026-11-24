@@ -1,6 +1,8 @@
+import { after } from "next/server";
 import { auth } from "@/lib/auth/server";
 import { SlotUnavailableError } from "@/lib/booking/create";
 import { createBookingForPatient } from "@/lib/booking/service";
+import { notifyBookingRequested } from "@/lib/email/notify";
 import { getDoctorBySlug } from "@/lib/services";
 import { fieldErrors } from "@/lib/validation/auth";
 import { bookingRequestSchema } from "@/lib/validation/booking";
@@ -28,11 +30,28 @@ export async function POST(request: Request) {
   try {
     const booking = await createBookingForPatient({
       patientId: session.user.id,
+      patientName: session.user.name,
+      patientEmail: session.user.email,
       doctor,
       start: new Date(parsed.data.start),
       visitType: parsed.data.visitType,
       reason: parsed.data.reason,
     });
+    // The email goes out after the response is sent, so a slow mail server never slows booking down.
+    after(() =>
+      notifyBookingRequested({
+        bookingId: booking.id,
+        patientName: session.user.name,
+        patientEmail: session.user.email,
+        doctorName: doctor.name,
+        specialty: doctor.specialty,
+        start: booking.start.toISOString(),
+        timezone: booking.timezone,
+        visitType: parsed.data.visitType,
+        reason: parsed.data.reason,
+      }),
+    );
+
     return Response.json(
       {
         id: booking.id,
