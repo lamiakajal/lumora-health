@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { CancelBookingButton } from "@/components/portal/cancel-booking-button";
+import { canReschedule } from "@/lib/booking/policy";
 import { isActiveStatus, type BookingStatus } from "@/lib/booking/status";
 import { listBookings } from "@/lib/booking/service";
 import { formatDay, formatTime, timeZoneLabel } from "@/lib/booking/time";
@@ -22,6 +23,7 @@ const statusLabels: Record<BookingStatus, string> = {
 /** The signed-in patient's appointments. Reads the database, so render it inside <Suspense>. */
 export async function Appointments({ patientId }: { patientId: string }) {
   const bookings = await listBookings(patientId);
+  const now = new Date();
   const upcoming = bookings.filter((booking) => isActiveStatus(booking.status));
   const history = bookings.filter((booking) => !isActiveStatus(booking.status)).reverse();
 
@@ -62,7 +64,15 @@ export async function Appointments({ patientId }: { patientId: string }) {
         </span>
       </div>
       {canCancel && (
-        <div className="mt-3 border-t pt-3">
+        <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 border-t pt-3">
+          {canReschedule(booking.status, new Date(booking.start), now) && (
+            <Link
+              href={`/book?reschedule=${booking.id}&doctor=${booking.doctorSlug}`}
+              className="text-sm font-bold text-primary-deep hover:underline"
+            >
+              Reschedule
+            </Link>
+          )}
           <CancelBookingButton bookingId={booking.id} />
         </div>
       )}
