@@ -3,7 +3,14 @@ import type { Doctor } from "@/data/doctors";
 import { AvailabilityModel, BookingModel, ProviderModel } from "@/lib/db/models";
 import { connectToDatabase } from "@/lib/db/mongoose";
 import { getDoctorBySlug } from "@/lib/services";
-import { placeBooking, isDuplicateKeyError, type BookingRepo } from "./create";
+import {
+  isDuplicateKeyError,
+  placeBooking,
+  placeReschedule,
+  SlotUnavailableError,
+  type BookingRepo,
+  type RescheduleRepo,
+} from "./create";
 import {
   defaultAvailability,
   MIN_NOTICE_MINUTES,
@@ -11,6 +18,7 @@ import {
   SLOT_MINUTES,
   type VisitType,
 } from "./defaults";
+import { canReschedule } from "./policy";
 import { generateSlots, type AvailabilityConfig, type DaySlots, type Interval } from "./slots";
 import { activeStatuses, type BookingStatus } from "./status";
 import type { BookingEmailData } from "@/lib/email/templates";
@@ -60,7 +68,9 @@ export async function getDoctorSlots(
   days: number,
   now: Date,
 ): Promise<{ config: AvailabilityConfig; days: DaySlots[] }> {
-  const config = await loadAvailability(doctor);
+  const loaded = await loadAvailability(doctor);
+  // A doctor who is switched off by an admin shows an empty calendar.
+  const config = (await isProviderActive(doctor.slug)) ? loaded : { ...loaded, weekly: [] };
   const today = localDateOf(now, config.timezone);
   const rangeEnd = zonedTimeToUtc(addDays(today, days + 1), "00:00", config.timezone);
   const busy = await findBusyBySlug(doctor.slug, new Date(now.getTime() - DAY_MS), rangeEnd);
@@ -69,6 +79,13 @@ export async function getDoctorSlots(
     config,
     days: generateSlots(today, days, config, { now, minNoticeMinutes: MIN_NOTICE_MINUTES, busy }),
   };
+}
+
+/** Doctors are active unless an admin has switched them off. */
+export async function isProviderActive(slug: string): Promise<boolean> {
+  await connectToDatabase();
+  const provider = await ProviderModel.findOne({ slug }).select({ active: 1 }).lean();
+  return provider ? provider.active !== false : true;
 }
 
 async function ensureProvider(doctor: Doctor, timezone: string) {
@@ -114,6 +131,9 @@ export async function createBookingForPatient({
   visitType,
   reason,
 }: CreateArgs) {
+  if (!(await isProviderActive(doctor.slug))) {
+    throw new SlotUnavailableError("This doctor is not taking bookings right now.");
+  }
   const config = await loadAvailability(doctor);
   const provider = await ensureProvider(doctor, config.timezone);
 
@@ -235,4 +255,77 @@ export async function cancelBooking({
     { new: true },
   ).lean();
   return updated ? toEmailData(updated as unknown as BookingRow) : null;
+}
+
+type RescheduleArgs = {
+  bookingId: string;
+  userId: string;
+  isAdmin: boolean;
+  newStart: Date;
+  now: Date;
+};
+
+export type RescheduleResult =
+  | { ok: true; booking: BookingEmailData; previousStart: Date }
+  | { ok: false; reason: "not-found" | "too-late" | "unavailable"; message?: string };
+
+/** Moves a visit to another open slot. It goes back to "pending" so the doctor confirms the new time. */
+export async function rescheduleBooking({ bookingId, userId, isAdmin, newStart, now }: RescheduleArgs): Promise<RescheduleResult> {
+  if (!isValidObjectId(bookingId)) return { ok: false, reason: "not-found" };
+  await connectToDatabase();
+
+  const current = await BookingModel.findOne({
+    _id: bookingId,
+    ...(isAdmin ? {} : { patientId: userId }),
+  }).lean();
+  if (!current) return { ok: false, reason: "not-found" };
+
+  const doctor = getDoctorBySlug(current.providerSlug);
+  if (!doctor) return { ok: false, reason: "not-found" };
+  if (!canReschedule(current.status as BookingStatus, current.start, now, { isAdmin })) {
+    return { ok: false, reason: "too-late" };
+  }
+  if (!(await isProviderActive(doctor.slug))) {
+    return { ok: false, reason: "unavailable", message: "This doctor is not taking bookings right now." };
+  }
+
+  const config = await loadAvailability(doctor);
+  const durationMinutes = Math.round((current.end.getTime() - current.start.getTime()) / 60_000);
+  // A holder object, because TypeScript cannot see a plain variable being set inside the callback below.
+  const moved: { row: BookingRow | null } = { row: null };
+
+  const repo: RescheduleRepo = {
+    findBusy: (from, to) => findBusy(current.providerId, from, to),
+    async move(start, end) {
+      const updated = await BookingModel.findOneAndUpdate(
+        // Only a visit that is still pending or confirmed can be moved.
+        { _id: bookingId, status: { $in: [...activeStatuses] } },
+        {
+          $set: { start, end, status: "pending", previousStart: current.start, rescheduledAt: now },
+          $unset: { reminderSentAt: 1 },
+        },
+        { new: true },
+      ).lean();
+      moved.row = (updated as unknown as BookingRow | null) ?? null;
+      return Boolean(updated);
+    },
+  };
+
+  try {
+    await placeReschedule({
+      repo,
+      config,
+      current: { start: current.start, end: current.end },
+      newStart,
+      now,
+      durationMinutes,
+      minNoticeMinutes: MIN_NOTICE_MINUTES,
+    });
+  } catch (error) {
+    if (error instanceof SlotUnavailableError) return { ok: false, reason: "unavailable", message: error.message };
+    throw error;
+  }
+
+  if (!moved.row) return { ok: false, reason: "not-found" };
+  return { ok: true, booking: toEmailData(moved.row), previousStart: current.start };
 }
