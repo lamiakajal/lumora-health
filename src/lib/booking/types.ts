@@ -1,5 +1,7 @@
 import type { BookingStatus } from "./status";
+import type { TimeOffEntry } from "./availability-rules";
 import type { VisitType } from "./defaults";
+import type { WeeklyRule } from "./slots";
 
 /** What the browser is allowed to know about a booking. */
 export type BookingSummary = {
@@ -21,4 +23,19 @@ export type AvailabilityResponse = {
   timezoneLabel: string;
   durationMinutes: number;
   days: { date: string; slots: string[] }[];
+};
+
+/** A booking as the doctor or an admin sees it (includes who the patient is). */
+export type ProviderBooking = BookingSummary & {
+  patientName: string;
+  patientEmail: string;
+};
+
+/** The hours editor's starting point (also what the doctor dashboard loads). */
+export type EditorAvailability = {
+  timezone: string;
+  weekly: WeeklyRule[];
+  slotMinutes: number;
+  bufferMinutes: number;
+  timeOff: TimeOffEntry[];
 };
