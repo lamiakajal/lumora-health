@@ -19,9 +19,17 @@ describe("zonedTimeToUtc", () => {
     );
   });
 
-  it("converts Vancouver winter time (UTC-8)", () => {
-    expect(zonedTimeToUtc("2026-11-23", "09:00", "America/Vancouver").toISOString()).toBe(
+  it("converts Los Angeles winter time (UTC-8)", () => {
+    expect(zonedTimeToUtc("2026-11-23", "09:00", "America/Los_Angeles").toISOString()).toBe(
       "2026-11-23T17:00:00.000Z",
+    );
+  });
+
+  it("converts Vancouver time before British Columbia's move to permanent daylight time", () => {
+    // BC is moving to permanent UTC-7 from 2026, so a 2026 winter date would be UTC-7 there.
+    // A 2025 date is still ordinary winter time (UTC-8) and does not depend on that decision.
+    expect(zonedTimeToUtc("2025-11-24", "09:00", "America/Vancouver").toISOString()).toBe(
+      "2025-11-24T17:00:00.000Z",
     );
   });
 
