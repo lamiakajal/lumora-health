@@ -34,3 +34,23 @@ Completed and cancelled are final (`src/lib/booking/status.ts`). Cancelling free
 - `slots.test.ts`: slot generation, buffers, time off, notice, double booking.
 - `create.test.ts`: two patients racing for one slot, only one wins.
 - `status.test.ts`: allowed status changes.
+
+## Emails
+
+`src/lib/email` builds the messages (`templates.ts`, plain text plus HTML, every patient-supplied
+value escaped) and sends them with Resend (`send.ts`). Sending never throws: a failed email can
+not break a booking. Emails go out after the response is sent, using Next.js `after()`.
+
+| Event | Email |
+| --- | --- |
+| Patient books | "Appointment requested" |
+| Doctor confirms | "Your appointment is confirmed" |
+| Patient or clinic cancels | "Appointment cancelled" |
+| Day before the visit | "Your appointment is coming up" (daily job) |
+
+## Doctor dashboard
+
+`/dashboard` (role `doctor`): confirm or decline pending visits, mark visits completed once they
+have started, edit weekly hours (several windows per day), visit length, breaks and holidays.
+Every change is checked again on the server, and the status rules in `status.ts` decide what is
+allowed. Time off is stored as whole local days and removes every slot on those days.
