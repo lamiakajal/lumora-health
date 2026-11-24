@@ -2,9 +2,11 @@ import { describe, expect, it } from "vitest";
 import {
   isDuplicateKeyError,
   placeBooking,
+  placeReschedule,
   SlotUnavailableError,
   type BookingRepo,
   type NewBooking,
+  type RescheduleRepo,
 } from "./create";
 import type { AvailabilityConfig, Interval } from "./slots";
 
@@ -126,5 +128,81 @@ describe("isDuplicateKeyError", () => {
     expect(isDuplicateKeyError({ code: 1 })).toBe(false);
     expect(isDuplicateKeyError(null)).toBe(false);
     expect(isDuplicateKeyError("boom")).toBe(false);
+  });
+});
+
+
+describe("placeReschedule", () => {
+  const current = {
+    start: new Date("2026-11-23T17:00:00.000Z"),
+    end: new Date("2026-11-23T17:30:00.000Z"),
+  };
+  const target = new Date("2026-11-23T18:00:00.000Z"); // Monday 10:00 PST
+
+  function rescheduleRepo(busy: Interval[] = [], moved = true): RescheduleRepo & { moves: Date[] } {
+    const moves: Date[] = [];
+    return {
+      moves,
+      findBusy: async () => [current, ...busy], // the booking's own slot is always in the busy list
+      async move(start) {
+        moves.push(start);
+        return moved;
+      },
+    };
+  }
+
+  const reschedule = (repo: RescheduleRepo, newStart = target) =>
+    placeReschedule({ repo, config, current, newStart, now: NOW, durationMinutes: 30, minNoticeMinutes: 120 });
+
+  it("moves a booking to another open slot", async () => {
+    const repo = rescheduleRepo();
+    const slot = await reschedule(repo);
+    expect(slot.start.toISOString()).toBe("2026-11-23T18:00:00.000Z");
+    expect(slot.end.toISOString()).toBe("2026-11-23T18:30:00.000Z");
+    expect(repo.moves).toHaveLength(1);
+  });
+
+  it("does not let a booking collide with itself when moving to an overlapping time", async () => {
+    // A 60 minute visit at 09:00-10:00 moves to 09:30-10:30. Those overlap, but the only
+    // thing in the way is the booking's own old time, which must be ignored.
+    const own = { start: current.start, end: new Date(current.start.getTime() + 60 * 60_000) };
+    const repo: RescheduleRepo = { findBusy: async () => [own], move: async () => true };
+    const slot = await placeReschedule({
+      repo,
+      config,
+      current: own,
+      newStart: new Date("2026-11-23T17:30:00.000Z"),
+      now: NOW,
+      durationMinutes: 60,
+      minNoticeMinutes: 120,
+    });
+    expect(slot.start.toISOString()).toBe("2026-11-23T17:30:00.000Z");
+    expect(slot.end.toISOString()).toBe("2026-11-23T18:30:00.000Z");
+  });
+
+  it("rejects a slot someone else already has", async () => {
+    const repo = rescheduleRepo([{ start: target, end: new Date(target.getTime() + 30 * 60_000) }]);
+    await expect(reschedule(repo)).rejects.toBeInstanceOf(SlotUnavailableError);
+    expect(repo.moves).toHaveLength(0);
+  });
+
+  it("rejects a time outside the doctor's hours", async () => {
+    await expect(reschedule(rescheduleRepo(), new Date("2026-11-24T17:00:00.000Z"))).rejects.toBeInstanceOf(
+      SlotUnavailableError,
+    );
+  });
+
+  it("turns a duplicate key error from the database into a friendly one", async () => {
+    const repo: RescheduleRepo = {
+      findBusy: async () => [current],
+      move: async () => {
+        throw Object.assign(new Error("E11000"), { code: 11000 });
+      },
+    };
+    await expect(reschedule(repo)).rejects.toBeInstanceOf(SlotUnavailableError);
+  });
+
+  it("reports a booking that was cancelled while being moved", async () => {
+    await expect(reschedule(rescheduleRepo([], false))).rejects.toThrow("no longer be changed");
   });
 });
