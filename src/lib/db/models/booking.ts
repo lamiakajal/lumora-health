@@ -5,6 +5,9 @@ const bookingSchema = new Schema(
   {
     /** The Better Auth user id of the patient. */
     patientId: { type: String, required: true, index: true },
+    /** Copied from the account at booking time so emails never need another lookup. */
+    patientName: { type: String, required: true, trim: true },
+    patientEmail: { type: String, required: true, trim: true, lowercase: true },
     providerId: { type: Schema.Types.ObjectId, ref: "Provider", required: true },
     /** Copied from the provider so lists can show the doctor without another lookup. */
     providerSlug: { type: String, required: true, index: true },
@@ -18,6 +21,8 @@ const bookingSchema = new Schema(
     reason: { type: String, default: "", maxlength: 500 },
     priceCents: { type: Number, required: true, default: 0, min: 0 },
     rescheduledFrom: { type: Schema.Types.ObjectId, ref: "Booking" },
+    /** Set once the reminder email has been sent, so it is never sent twice. */
+    reminderSentAt: { type: Date },
     cancelledAt: { type: Date },
     cancelReason: { type: String, default: "" },
   },
