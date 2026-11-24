@@ -20,7 +20,9 @@ const bookingSchema = new Schema(
     visitType: { type: String, enum: ["in-person", "video"], required: true, default: "in-person" },
     reason: { type: String, default: "", maxlength: 500 },
     priceCents: { type: Number, required: true, default: 0, min: 0 },
-    rescheduledFrom: { type: Schema.Types.ObjectId, ref: "Booking" },
+    /** The time the visit had before the patient moved it. */
+    previousStart: { type: Date },
+    rescheduledAt: { type: Date },
     /** Set once the reminder email has been sent, so it is never sent twice. */
     reminderSentAt: { type: Date },
     cancelledAt: { type: Date },
