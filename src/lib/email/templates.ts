@@ -152,3 +152,14 @@ export function bookingReminderEmail(data: BookingEmailData): EmailContent {
     "Need to change plans? Please cancel from your portal so someone else can use the time.",
   );
 }
+
+export function bookingRescheduledEmail(data: BookingEmailData, previousStart: string): EmailContent {
+  const before = whenText({ start: previousStart, timezone: data.timezone });
+  return build(
+    `Rescheduled: ${whenText(data)}`,
+    "Appointment rescheduled",
+    `Hi ${firstName(data.patientName)}, your visit with ${data.doctorName} moved from ${before} to the time below. ${data.doctorName} will confirm the new time and we will email you.`,
+    data,
+    "Need a different time? You can move it again from your patient portal.",
+  );
+}
