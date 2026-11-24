@@ -54,3 +54,19 @@ not break a booking. Emails go out after the response is sent, using Next.js `af
 have started, edit weekly hours (several windows per day), visit length, breaks and holidays.
 Every change is checked again on the server, and the status rules in `status.ts` decide what is
 allowed. Time off is stored as whole local days and removes every slot on those days.
+
+## Rescheduling
+
+Patients can move a pending or confirmed visit from the portal (`/book?reschedule=<id>`), up to
+24 hours before it starts (`policy.ts`; admins can move any visit that has not started). The same
+safety checks as a new booking apply (`placeReschedule` in `create.ts`): the open slots are worked
+out again on the server, the booking's own old time never blocks its new one, and the database's
+unique index stops two people taking one slot. A moved visit goes back to *pending* so the doctor
+confirms the new time, and the patient gets a "rescheduled" email showing both times.
+
+## Admin dashboard
+
+`/admin` (role `admin`): totals by status, a weekly visit-value chart (completed vs pending and
+confirmed), a searchable table of every booking with confirm, complete and cancel actions, and
+doctor management: link a doctor's account by email, or switch a doctor off so they stop taking
+new bookings (their calendar shows no slots; existing visits are untouched).
