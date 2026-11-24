@@ -16,6 +16,8 @@ export function isDuplicateKeyError(error: unknown): boolean {
 
 export type NewBooking = {
   patientId: string;
+  patientName: string;
+  patientEmail: string;
   providerSlug: string;
   serviceSlug: string;
   start: Date;
