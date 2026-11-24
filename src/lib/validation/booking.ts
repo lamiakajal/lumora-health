@@ -17,3 +17,7 @@ export const cancelRequestSchema = z.object({
   action: z.literal("cancel"),
   reason: z.string().trim().max(300).default(""),
 });
+
+export const rescheduleRequestSchema = z.object({
+  start: isoDate,
+});
