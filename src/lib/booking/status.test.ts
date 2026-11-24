@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bookingStatuses, canTransition, isActiveStatus } from "./status";
+import { bookingStatuses, canTransition, decideStatusChange, isActiveStatus } from "./status";
 
 describe("canTransition", () => {
   it("follows pending -> confirmed -> completed", () => {
@@ -31,5 +31,33 @@ describe("isActiveStatus", () => {
     expect(isActiveStatus("confirmed")).toBe(true);
     expect(isActiveStatus("completed")).toBe(false);
     expect(isActiveStatus("cancelled")).toBe(false);
+  });
+});
+
+
+describe("decideStatusChange", () => {
+  const past = new Date("2026-11-20T10:00:00.000Z");
+  const future = new Date("2026-11-30T10:00:00.000Z");
+  const now = new Date("2026-11-25T10:00:00.000Z");
+
+  it("lets a doctor confirm a pending booking", () => {
+    expect(decideStatusChange("pending", "confirm", future, now)).toBe("ok");
+  });
+
+  it("does not confirm something that is already confirmed or cancelled", () => {
+    expect(decideStatusChange("confirmed", "confirm", future, now)).toBe("invalid");
+    expect(decideStatusChange("cancelled", "confirm", future, now)).toBe("invalid");
+  });
+
+  it("only completes confirmed bookings, and only once the visit has started", () => {
+    expect(decideStatusChange("confirmed", "complete", past, now)).toBe("ok");
+    expect(decideStatusChange("confirmed", "complete", future, now)).toBe("too-early");
+    expect(decideStatusChange("pending", "complete", past, now)).toBe("invalid");
+  });
+
+  it("cancels pending and confirmed bookings but nothing final", () => {
+    expect(decideStatusChange("pending", "cancel", future, now)).toBe("ok");
+    expect(decideStatusChange("confirmed", "cancel", future, now)).toBe("ok");
+    expect(decideStatusChange("completed", "cancel", past, now)).toBe("invalid");
   });
 });
