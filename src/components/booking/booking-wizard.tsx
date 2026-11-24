@@ -43,6 +43,11 @@ export function BookingWizard() {
   const service = getServiceBySlug(params.get("service") ?? "");
   const choices = service ? doctorsForService(service) : doctors;
   const requestedDoctor = params.get("doctor") ?? "";
+  // /book?reschedule=<booking id>&doctor=<slug> moves an existing visit instead of making a new one.
+  const rescheduleId = params.get("reschedule");
+  const isReschedule = Boolean(rescheduleId && getDoctorBySlug(requestedDoctor));
+  const returnPath = (slug: string) =>
+    isReschedule ? `/book?reschedule=${rescheduleId}&doctor=${slug}` : `/book?doctor=${slug}`;
 
   const [doctorSlug, setDoctorSlug] = useState(getDoctorBySlug(requestedDoctor) ? requestedDoctor : "");
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
@@ -78,21 +83,20 @@ export function BookingWizard() {
     if (!doctor || !activeStart) return;
     setSubmitting(true);
     try {
-      const response = await fetch("/api/bookings", {
+      const response = await fetch(isReschedule ? `/api/bookings/${rescheduleId}/reschedule` : "/api/bookings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          doctorSlug: doctor.slug,
-          start: activeStart,
-          visitType: effectiveVisit,
-          reason,
-        }),
+        body: JSON.stringify(
+          isReschedule
+            ? { start: activeStart }
+            : { doctorSlug: doctor.slug, start: activeStart, visitType: effectiveVisit, reason },
+        ),
       });
       const body = await response.json().catch(() => ({}));
 
       if (response.status === 401) {
         toast.error("Please sign in to book");
-        router.push(`/login?next=${encodeURIComponent(`/book?doctor=${doctor.slug}`)}`);
+        router.push(`/login?next=${encodeURIComponent(returnPath(doctor.slug))}`);
         return;
       }
       if (response.status === 409) {
@@ -102,7 +106,7 @@ export function BookingWizard() {
         return;
       }
       if (!response.ok) {
-        toast.error("We could not book that visit", {
+        toast.error(isReschedule ? "We could not move that visit" : "We could not book that visit", {
           description: body.error ?? "Please try again in a moment.",
         });
         return;
@@ -114,8 +118,11 @@ export function BookingWizard() {
         start: body.start,
         timezone: body.timezone,
         visitType: effectiveVisit,
+        rescheduled: isReschedule,
       });
-      toast.success("Appointment requested", { description: "You can manage it in your portal." });
+      toast.success(isReschedule ? "Appointment rescheduled" : "Appointment requested", {
+        description: "You can manage it in your portal.",
+      });
     } catch {
       toast.error("We could not reach the server", { description: "Check your connection and try again." });
     } finally {
@@ -144,6 +151,7 @@ export function BookingWizard() {
             id="booking-doctor"
             value={doctorSlug}
             onChange={(event) => chooseDoctor(event.target.value)}
+            disabled={isReschedule}
             className={control}
           >
             <option value="">Select a doctor</option>
@@ -161,7 +169,15 @@ export function BookingWizard() {
               );
             })}
           </select>
-          {service && (
+          {isReschedule && (
+            <p className="mt-3 text-sm text-muted-foreground">
+              You are choosing a new time for an existing visit.{" "}
+              <Link href="/portal" className="font-bold text-primary-deep hover:underline">
+                Back to my appointments
+              </Link>
+            </p>
+          )}
+          {service && !isReschedule && (
             <p className="mt-3 text-sm text-muted-foreground">
               Showing {service.title.toLowerCase()} doctors.{" "}
               <Link href="/book" className="font-bold text-primary-deep hover:underline">
@@ -264,7 +280,7 @@ export function BookingWizard() {
 
       <aside className="lg:sticky lg:top-28 lg:self-start">
         <div className="rounded-card border bg-card p-6 shadow-lift">
-          <h2 className="font-display text-xl font-bold">Your visit</h2>
+          <h2 className="font-display text-xl font-bold">{isReschedule ? "New time" : "Your visit"}</h2>
 
           {doctor ? (
             <p className="mt-3">
@@ -281,7 +297,7 @@ export function BookingWizard() {
             </p>
           )}
 
-          {doctor && (
+          {doctor && !isReschedule && (
             <fieldset className="mt-5">
               <legend className="mb-2 text-sm font-bold">Type of visit</legend>
               <div className="grid grid-cols-2 gap-2">
@@ -315,6 +331,7 @@ export function BookingWizard() {
             </fieldset>
           )}
 
+          {!isReschedule && (
           <div className="mt-5">
             <label htmlFor="booking-reason" className="mb-1.5 block text-sm font-bold">
               Reason for your visit <span className="font-normal text-muted-foreground">(optional)</span>
@@ -329,6 +346,7 @@ export function BookingWizard() {
             />
             <p className="mt-1 text-right text-xs text-muted-foreground">{reason.length}/500</p>
           </div>
+          )}
 
           {signedIn ? (
             <button
@@ -337,11 +355,11 @@ export function BookingWizard() {
               disabled={!doctor || !activeStart || submitting}
               className={buttonStyles({ size: "lg", className: "mt-4 w-full disabled:cursor-not-allowed disabled:opacity-50" })}
             >
-              {submitting ? "Booking..." : "Confirm appointment"}
+              {submitting ? "Saving..." : isReschedule ? "Confirm new time" : "Confirm appointment"}
             </button>
           ) : (
             <Link
-              href={`/login?next=${encodeURIComponent(doctor ? `/book?doctor=${doctor.slug}` : "/book")}`}
+              href={`/login?next=${encodeURIComponent(doctor ? returnPath(doctor.slug) : "/book")}`}
               className={buttonStyles({ size: "lg", className: "mt-4 w-full" })}
             >
               Sign in to confirm
